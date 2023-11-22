@@ -1,0 +1,44 @@
+-- wybieramy same nazwy z powiatów
+SELECT "JPT_NAZWA_" FROM powiaty
+
+-- wybieramy 10 największych powiatów i wizualizujemy
+SELECT "JPT_NAZWA_", ST_AREA(geometry), geometry AS pow FROM powiaty
+ORDER BY ST_AREA(geometry) DESC
+LIMIT 10
+
+-- wszystkie powiaty, których nazwa kończy się na 'e'
+SELECT "JPT_NAZWA_", geometry AS pow FROM powiaty
+WHERE "JPT_NAZWA_" LIKE '%e'
+
+-- liczymy ile powiatów kończy się na jaką literę i sortujemy wyniki
+SELECT substr(JPT_NAZWA_,-1) as koncowka, count(*) FROM powiaty
+group by substr(JPT_NAZWA_,-1)
+order by count(*) DESC
+
+
+-- wybieramy punkty, które się przecinają z liniami i w tabeli mamy informację który punkt przecina się z którą linią
+SELECT 
+	pkt.FID as pkt_fid, 
+	linia.FID as linia_FID, 
+	pkt.geometry 
+FROM pkt
+left outer join linia
+on st_intersects(pkt.geometry, linia.geometry)
+where linia_FID is NOT NULL
+
+
+
+-- wybieramy te punkty, które przecinają się dokładnie z 1 linią
+with pkt2 as (
+	SELECT 
+		pkt.FID as pkt_fid, 
+		linia.FID as linia_FID, 
+		pkt.geometry 
+	FROM pkt
+	left outer join linia
+	on st_intersects(pkt.geometry, linia.geometry)
+	where linia_FID is NOT NULL
+)
+SELECT pkt_fid , geometry from pkt2
+group by pkt_fid
+having count(*) = 1
